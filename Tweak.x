@@ -276,6 +276,116 @@ static YTQTMButton *createButtonBottom(BOOL isText, YTInlinePlayerBarContainerVi
 
 %end
 
+%hook YTWatchFloatingMiniplayerWithControlsOverlayView // Floating Miniplayer Support
+
+%new(@@:@@@:)
+- (YTQTMButton *)createButton:(NSString *)buttonId accessibilityLabel:(NSString *)accessibilityLabel selector:(SEL)selector {
+    return createButtonBottom(NO, self, buttonId, accessibilityLabel, selector);
+}
+
+%new(@@:@@@:)
+- (YTQTMButton *)createTextButton:(NSString *)buttonId accessibilityLabel:(NSString *)accessibilityLabel selector:(SEL)selector {
+    return createButtonBottom(YES, self, buttonId, accessibilityLabel, selector);
+}
+
+%new(@@:@)
+- (YTQTMButton *)button:(NSString *)tweakId {
+    return nil;
+}
+
+%new(@@:@)
+- (UIImage *)buttonImage:(NSString *)tweakId {
+    return nil;
+}
+
+- (NSMutableArray *)rightIcons {
+    NSMutableArray *icons = %orig;
+    for (NSString *name in bottomButtons) {
+        if (UseBottomButton(name)) {
+            YTQTMButton *button = [self button:name];
+            [icons insertObject:button atIndex:0];
+        }
+    }
+    return icons;
+}
+
+- (void)updateIconVisibility {
+    %orig;
+    for (NSString *name in bottomButtons) {
+        if (UseBottomButton(name))
+            [self button:name].hidden = NO;
+    }
+}
+
+- (void)updateIconsHiddenAttribute {
+    %orig;
+    for (NSString *name in bottomButtons) {
+        if (UseBottomButton(name))
+            [self button:name].hidden = NO;
+    }
+}
+
+- (void)hideScrubber {
+    %orig;
+    for (NSString *name in bottomButtons) {
+        if (UseBottomButton(name))
+            [self button:name].alpha = 0;
+    }
+}
+
+- (void)setPeekableViewVisible:(BOOL)visible {
+    %orig;
+    for (NSString *name in bottomButtons) {
+        if (UseBottomButton(name))
+            [self button:name].alpha = visible ? 1 : 0;
+    }
+}
+
+- (void)setPeekableViewVisible:(BOOL)visible fullscreenButtonVisibleShouldMatchPeekableView:(BOOL)match {
+    %orig;
+    for (NSString *name in bottomButtons) {
+        if (UseBottomButton(name))
+            [self button:name].alpha = visible ? 1 : 0;
+    }
+}
+
+- (void)peekWithShowScrubber:(BOOL)scrubber setControlsAbovePlayerBarVisible:(BOOL)visible {
+    %orig;
+    for (NSString *name in bottomButtons) {
+        if (UseBottomButton(name))
+            [self button:name].alpha = visible ? 1 : 0;
+    }
+}
+
+- (void)layoutSubviews {
+    %orig;
+    CGFloat multiFeedWidth = [self respondsToSelector:@selector(multiFeedElementView)] ? [self multiFeedElementView].frame.size.width : 0;
+    YTQTMButton *enter = [self enterFullscreenButton];
+    CGFloat shift = 0;
+    CGRect frame = CGRectZero;
+    if ([enter yt_isVisible]) {
+        frame = enter.frame;
+        shift = multiFeedWidth + (2 * frame.size.width);
+    } else {
+        YTQTMButton *exit = [self exitFullscreenButton];
+        if ([exit yt_isVisible]) {
+            frame = exit.frame;
+            shift = multiFeedWidth + (2 * frame.size.width);
+        }
+    }
+    if (CGRectIsEmpty(frame) || frame.origin.x <= 0 || frame.origin.y < -4) return;
+    frame.origin.x -= shift;
+    for (NSString *name in bottomButtons) {
+        if (UseBottomButton(name)) {
+            [self button:name].frame = frame;
+            frame.origin.x -= (2 * frame.size.width);
+            if (frame.origin.x < 0) frame.origin.x = 0;
+        }
+    }
+}
+
+%end
+
 %end
 
 %group Settings
