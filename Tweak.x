@@ -265,10 +265,20 @@ static YTQTMButton *createButtonBottom(BOOL isText, YTInlinePlayerBarContainerVi
     }
     if (CGRectIsEmpty(frame) || frame.origin.x <= 0 || frame.origin.y < -4) return;
     frame.origin.x -= shift;
+
+    CGFloat spacing;
+    if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+        // Modified for iPads
+        spacing = frame.size.width * 1.5;
+    } else {
+        // Original for iPhones
+        spacing = 2 * frame.size.width;
+    }
+
     for (NSString *name in bottomButtons) {
         if (UseBottomButton(name)) {
             [self button:name].frame = frame;
-            frame.origin.x -= (2 * frame.size.width);
+            frame.origin.x -= spacing;
             if (frame.origin.x < 0) frame.origin.x = 0;
         }
     }
